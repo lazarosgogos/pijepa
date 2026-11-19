@@ -1,6 +1,15 @@
 # pijepa
 
-P-IJEPA trains an image encoder to predict features for hidden image patches. Its additional loss helps preserve similarity between patches. [Research paper](https://doi.org/10.1016/j.patrec.2026.07.005)
+P-IJEPA learns image features without labels. I-JEPA predicts features for hidden patches from the visible part of an image. P-IJEPA adds a second loss that helps the predictions preserve similarities between patches. [Research paper](https://doi.org/10.1016/j.patrec.2026.07.005)
+
+<details>
+<summary>Architecture diagram</summary>
+
+![P-IJEPA context encoder, predictor, and target encoder](docs/architecture.png)
+
+The context encoder processes the visible patches. The predictor estimates the features of hidden patches. The target encoder supplies the features that guide training.
+
+</details>
 
 ## Run on one GPU
 
@@ -59,12 +68,75 @@ Find checkpoints, training logs, and TensorBoard data in `runs/pijepa/`. Adjust 
 | `configs/ijepa.yaml` | Train the same model with the baseline loss (`L2`). |
 | `configs/probe.yaml` | Train a linear classifier on features from saved P-IJEPA checkpoints. |
 
-For the baseline, use `configs/ijepa.yaml` in step 4. For linear probing, wait for training to save a numbered checkpoint. Then run:
+For the baseline, use `configs/ijepa.yaml` in step 4. More configurations can be found in the original [ijepa repository](https://github.com/facebookresearch/ijepa/tree/main/configs). For linear probing, wait for training to save a numbered checkpoint. Then run:
 
 ```bash
 python pmulti-linear-probing.py --fname configs/probe.yaml
 ```
 
-Notice the absence of the `--devices ` command line argument in the evaluation bash script. It is defined inside the config itself by design.  
+Choose the evaluation GPU with `meta.device` in `configs/probe.yaml`.
+
+## Reference
+
+<details>
+<summary>Training settings</summary>
+
+Edit the YAML file you pass to `main.py`. These defaults come from `configs/pijepa.yaml`.
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `data.root_path` / `data.image_folder` | `datasets/` / `imagenet100` | Locate the dataset and its splits. |
+| `data.batch_size` | 16 | Set the number of images per GPU per batch. |
+| `optimization.epochs` | 300 | Set the number of training epochs. |
+| `optimization.loss_function` | `L2_PKT` | Use the combined loss. Select `L2` for the baseline. |
+| `logging.folder` | `runs/pijepa` | Choose where training writes its outputs. |
+| `logging.checkpoint_freq` | 150 | Set the interval in epochs between numbered checkpoints. |
+
+</details>
+
+<details>
+<summary>Checkpoints, training metrics, and linear probing</summary>
+
+The training script writes the latest weights to `runs/pijepa/jepa-in100-latest.pth.tar`. With the default settings, it also writes numbered checkpoints such as `jepa-in100-ep150.pth.tar`.
+
+To view training metrics, start TensorBoard and open the URL it prints.
+
+```bash
+tensorboard --logdir runs/pijepa
+```
+
+For linear probing, list the training folders under `multi_probing` in `configs/probe.yaml`. Set `data.probe_prefix` to the training run’s `logging.write_tag`. The probe evaluates each matching numbered checkpoint.
+
+</details>
+
+<details>
+<summary>Results from the paper</summary>
+
+The authors pretrained ViT-B for 500 epochs, froze the encoder, and trained a linear classifier. Values show mean validation accuracy (%) and standard deviation across three seeds.
+
+| Dataset | I-JEPA | P-IJEPA |
+| --- | ---: | ---: |
+| IIC | 78.74 ± 0.59 | 80.13 ± 0.48 |
+| STL-10 | 68.82 ± 0.29 | 72.44 ± 0.52 |
+| ImageNet-100 | 56.79 ± 1.18 | 58.20 ± 1.04 |
+
+</details>
+
+<details>
+<summary>Cite P-IJEPA (BibTeX)</summary>
+
+```bibtex
+@article{gogos2026probabilistic,
+  title   = {Probabilistic image-based joint embedding predictive architecture},
+  author  = {Gogos, Lazaros and Katsikas, Dimitrios and Passalis, Nikolaos and Tefas, Anastasios},
+  journal = {Pattern Recognition Letters},
+  volume  = {207},
+  pages   = {234--240},
+  year    = {2026},
+  doi     = {10.1016/j.patrec.2026.07.005}
+}
+```
+
+</details>
 
 This implementation builds on [I-JEPA](https://github.com/facebookresearch/ijepa). See the [license](LICENSE) for terms.
