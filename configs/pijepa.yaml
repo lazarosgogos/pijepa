@@ -55,7 +55,7 @@ optimization:
   start_lr: 0.0002
   warmup: 40
   weight_decay: 0.04
-  loss_function: L2_PKT
+  loss_function: L2_PKT # check the which_loss.py file to see available functions
   pkt_scale: 1.0
   variance_weight: 0.0
   accumulate_grads_every: 1
