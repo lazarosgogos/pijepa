@@ -1,0 +1,25 @@
+data:
+  crop_size: 224
+  num_classes: 100
+  train_dataset_path: datasets/imagenet100/train
+  val_dataset_path: datasets/imagenet100/val
+  model_name: vit_base
+  batch_size: 128
+  patch_size: 16
+  probe_checkpoints: true
+  probe_prefix: jepa-in100
+logging:
+  log_dir: runs/pijepa
+  save_path: runs/pijepa/probe
+  checkpoint_freq: 1000
+  log_file: probe.csv
+  eval_output: probe.out
+optimization:
+  lr: 0.001
+  epochs: 200
+  use_last_n_blocks: 1
+  use_normalization: false
+meta:
+  device: cuda:0
+multi_probing:
+- runs/pijepa

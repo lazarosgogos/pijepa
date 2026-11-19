@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+runs/
+datasets/imagenet100/
+*.pth.tar
+*.out
+*.log
+events.out.tfevents.*
